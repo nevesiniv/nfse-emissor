@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 export default function NewSalePage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     amount: "",
     description: "",
@@ -14,6 +15,22 @@ export default function NewSalePage() {
     buyerDocument: "",
     buyerEmail: "",
   });
+
+  const formatBRL = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    if (!digits) return "";
+    const cents = parseInt(digits, 10);
+    return (cents / 100).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const parseBRL = (formatted: string): string => {
+    const digits = formatted.replace(/\D/g, "");
+    if (!digits) return "";
+    return (parseInt(digits, 10) / 100).toString();
+  };
 
   const formatCPFCNPJ = (value: string) => {
     const digits = value.replace(/\D/g, "");
@@ -30,14 +47,29 @@ export default function NewSalePage() {
       .replace(/(\d{4})(\d{1,2})/, "$1-$2");
   };
 
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!form.amount) newErrors.amount = "Informe o valor da venda.";
+    else if (parseFloat(parseBRL(form.amount)) <= 0) newErrors.amount = "O valor deve ser maior que zero.";
+    if (!form.description.trim()) newErrors.description = "Informe a descrição do serviço.";
+    if (!form.buyerName.trim()) newErrors.buyerName = "Informe o nome do tomador.";
+    const docDigits = form.buyerDocument.replace(/\D/g, "");
+    if (!docDigits) newErrors.buyerDocument = "Informe o CPF ou CNPJ.";
+    else if (docDigits.length !== 11 && docDigits.length !== 14) newErrors.buyerDocument = "CPF deve ter 11 dígitos e CNPJ 14.";
+    if (form.buyerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.buyerEmail)) newErrors.buyerEmail = "Email inválido.";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     setLoading(true);
 
     try {
       const idempotencyKey = crypto.randomUUID();
       await api.post("/sales", {
-        amount: parseFloat(form.amount),
+        amount: parseFloat(parseBRL(form.amount)),
         description: form.description,
         serviceCode: form.serviceCode,
         buyer: {
@@ -71,20 +103,19 @@ export default function NewSalePage() {
     <div className="max-w-2xl">
       <h2 className="text-xl font-semibold mb-6">Nova Venda</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
         {/* Valor */}
         <div>
           <label className="block text-sm text-slate-400 mb-1.5">Valor (R$)</label>
           <input
-            type="number"
-            step="0.01"
-            min="0.01"
+            type="text"
+            inputMode="numeric"
             value={form.amount}
-            onChange={(e) => setForm({ ...form, amount: e.target.value })}
-            className="input-dark font-mono"
-            placeholder="1500.00"
-            required
+            onChange={(e) => { setForm({ ...form, amount: formatBRL(e.target.value) }); setErrors((prev) => ({ ...prev, amount: "" })); }}
+            className={`input-dark font-mono ${errors.amount ? "border-red-500" : ""}`}
+            placeholder="0,00"
           />
+          {errors.amount && <p className="text-red-400 text-xs mt-1">{errors.amount}</p>}
         </div>
 
         {/* Descrição */}
@@ -94,11 +125,11 @@ export default function NewSalePage() {
           </label>
           <textarea
             value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            className="input-dark min-h-[80px] resize-y"
+            onChange={(e) => { setForm({ ...form, description: e.target.value }); setErrors((prev) => ({ ...prev, description: "" })); }}
+            className={`input-dark min-h-[80px] resize-y ${errors.description ? "border-red-500" : ""}`}
             placeholder="Serviço de consultoria em TI"
-            required
           />
+          {errors.description && <p className="text-red-400 text-xs mt-1">{errors.description}</p>}
         </div>
 
         {/* Código do Serviço */}
@@ -129,11 +160,11 @@ export default function NewSalePage() {
           <input
             type="text"
             value={form.buyerName}
-            onChange={(e) => setForm({ ...form, buyerName: e.target.value })}
-            className="input-dark"
+            onChange={(e) => { setForm({ ...form, buyerName: e.target.value }); setErrors((prev) => ({ ...prev, buyerName: "" })); }}
+            className={`input-dark ${errors.buyerName ? "border-red-500" : ""}`}
             placeholder="João Silva"
-            required
           />
+          {errors.buyerName && <p className="text-red-400 text-xs mt-1">{errors.buyerName}</p>}
         </div>
 
         {/* CPF/CNPJ */}
@@ -142,14 +173,12 @@ export default function NewSalePage() {
           <input
             type="text"
             value={form.buyerDocument}
-            onChange={(e) =>
-              setForm({ ...form, buyerDocument: formatCPFCNPJ(e.target.value) })
-            }
-            className="input-dark font-mono"
+            onChange={(e) => { setForm({ ...form, buyerDocument: formatCPFCNPJ(e.target.value) }); setErrors((prev) => ({ ...prev, buyerDocument: "" })); }}
+            className={`input-dark font-mono ${errors.buyerDocument ? "border-red-500" : ""}`}
             placeholder="000.000.000-00"
             maxLength={18}
-            required
           />
+          {errors.buyerDocument && <p className="text-red-400 text-xs mt-1">{errors.buyerDocument}</p>}
         </div>
 
         {/* Email */}
@@ -158,12 +187,13 @@ export default function NewSalePage() {
             Email <span className="text-slate-600">(opcional)</span>
           </label>
           <input
-            type="email"
+            type="text"
             value={form.buyerEmail}
-            onChange={(e) => setForm({ ...form, buyerEmail: e.target.value })}
-            className="input-dark"
+            onChange={(e) => { setForm({ ...form, buyerEmail: e.target.value }); setErrors((prev) => ({ ...prev, buyerEmail: "" })); }}
+            className={`input-dark ${errors.buyerEmail ? "border-red-500" : ""}`}
             placeholder="joao@email.com"
           />
+          {errors.buyerEmail && <p className="text-red-400 text-xs mt-1">{errors.buyerEmail}</p>}
         </div>
 
         <button
