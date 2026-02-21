@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  password     String
+  createdAt    DateTime      @default(now())
+  certificates Certificate[]
+  sales        Sale[]
+}
+
+model Certificate {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  filename     String
+  pfxData      Bytes
+  passwordHash String
+  createdAt    DateTime @default(now())
+  active       Boolean  @default(true)
+}
+
+model Sale {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  amount          Decimal   @db.Decimal(10, 2)
+  description     String
+  serviceCode     String
+  buyerName       String
+  buyerDocument   String
+  buyerEmail      String?
+  status          String    @default("PROCESSING")
+  protocol        String?
+  xmlContent      String?   @db.Text
+  errorMessage    String?
+  webhookSentAt   DateTime?
+  processedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  idempotencyKey  String?   @unique
+}
