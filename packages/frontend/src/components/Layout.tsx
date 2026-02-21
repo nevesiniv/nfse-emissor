@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
@@ -7,8 +8,61 @@ const navItems = [
   { to: "/certificates", label: "Certificados", icon: "🔐" },
 ];
 
-export default function Layout() {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { user, logout } = useAuth();
+
+  return (
+    <>
+      <div className="p-6 border-b border-dark-border">
+        <h1 className="text-lg font-bold font-mono text-accent-green">
+          NFS-e Emissor
+        </h1>
+        <p className="text-xs text-slate-500 mt-1 font-mono">v1.0.0</p>
+      </div>
+
+      <nav className="flex-1 p-4 space-y-1">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === "/"}
+            onClick={onNavigate}
+            className={({ isActive }) =>
+              `relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
+                isActive
+                  ? "bg-accent-blue/10 text-accent-blue"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-dark-bg"
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-accent-blue rounded-r-full" />
+                )}
+                <span>{item.icon}</span>
+                <span>{item.label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
+      </nav>
+
+      <div className="p-4 border-t border-dark-border">
+        <div className="text-sm text-slate-400 truncate mb-2">{user?.email}</div>
+        <button
+          onClick={logout}
+          className="text-xs text-slate-500 hover:text-red-400 transition-colors"
+        >
+          Sair
+        </button>
+      </div>
+    </>
+  );
+}
+
+export default function Layout() {
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
 
   const breadcrumb = () => {
@@ -26,53 +80,45 @@ export default function Layout() {
 
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <aside className="w-60 bg-dark-surface border-r border-dark-border flex flex-col fixed h-full">
-        <div className="p-6 border-b border-dark-border">
-          <h1 className="text-lg font-bold font-mono text-accent-green">
-            NFS-e Emissor
-          </h1>
-          <p className="text-xs text-slate-500 mt-1 font-mono">v1.0.0</p>
-        </div>
-
-        <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/"}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
-                  isActive
-                    ? "bg-accent-blue/10 text-accent-blue border border-accent-blue/20"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-dark-bg"
-                }`
-              }
-            >
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="p-4 border-t border-dark-border">
-          <div className="text-sm text-slate-400 truncate mb-2">{user?.email}</div>
-          <button
-            onClick={logout}
-            className="text-xs text-slate-500 hover:text-red-400 transition-colors"
-          >
-            Sair
-          </button>
-        </div>
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex w-60 bg-dark-surface border-r border-dark-border flex-col fixed h-full">
+        <SidebarContent />
       </aside>
 
+      {/* Mobile Drawer Overlay */}
+      {drawerOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 md:hidden animate-overlay-in"
+          onClick={() => setDrawerOpen(false)}
+        />
+      )}
+
+      {/* Mobile Drawer */}
+      {drawerOpen && (
+        <aside className="fixed inset-y-0 left-0 w-60 bg-dark-surface border-r border-dark-border flex flex-col z-50 md:hidden animate-drawer-in">
+          <SidebarContent onNavigate={() => setDrawerOpen(false)} />
+        </aside>
+      )}
+
       {/* Main content */}
-      <div className="flex-1 ml-60">
-        <header className="h-14 border-b border-dark-border flex items-center px-6 bg-dark-surface/50 backdrop-blur sticky top-0 z-10">
+      <div className="flex-1 md:ml-60">
+        <header className="h-14 border-b border-dark-border flex items-center px-4 md:px-6 bg-dark-surface/50 backdrop-blur sticky top-0 z-10 gap-3">
+          {/* Mobile hamburger */}
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="md:hidden text-slate-400 hover:text-slate-200 transition-colors"
+            aria-label="Menu"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
           <span className="text-sm text-slate-400 font-mono">{breadcrumb()}</span>
         </header>
-        <main className="p-6">
-          <Outlet />
+        <main className="p-4 md:p-6">
+          <div className="page-enter">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
