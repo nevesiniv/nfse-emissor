@@ -7,7 +7,7 @@ Sistema full stack containerizado para simular emissao de NFS-e (Nota Fiscal de 
 ## Como Rodar
 
 ```bash
-git clone <repo>
+git clone https://github.com/nevesiniv/nfse-emissor.git
 cd nfse-emissor
 cp .env.example .env
 docker compose up --build
