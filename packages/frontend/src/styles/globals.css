@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-dark-bg text-slate-100;
+  }
+}
+
+@layer components {
+  .badge-success {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-emerald-500/15 text-emerald-400;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+  }
+
+  .badge-error {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-red-500/15 text-red-400;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+  }
+
+  .badge-processing {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-amber-500/15 text-amber-400 animate-pulse;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+  }
+
+  .card {
+    @apply bg-dark-surface border border-dark-border rounded-xl p-6 transition-all duration-200 ease-out;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  }
+
+  .btn-primary {
+    @apply px-4 py-2.5 bg-accent-blue hover:bg-blue-600 text-white font-medium rounded-lg transition-all duration-200 ease-out disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-green {
+    @apply px-4 py-2.5 bg-accent-green hover:bg-emerald-600 text-white font-medium rounded-lg transition-all duration-200 ease-out disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-danger {
+    @apply px-4 py-2.5 bg-accent-red hover:bg-red-600 text-white font-medium rounded-lg transition-all duration-200 ease-out disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .input-dark {
+    @apply w-full px-4 py-2.5 bg-dark-bg border border-dark-border rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-colors duration-200;
+  }
+}
