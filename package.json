@@ -1,0 +1,10 @@
+{
+  "name": "nfse-emissor",
+  "private": true,
+  "workspaces": [
+    "packages/api",
+    "packages/worker",
+    "packages/prefeitura-mock",
+    "packages/frontend"
+  ]
+}

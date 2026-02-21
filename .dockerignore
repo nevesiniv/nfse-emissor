@@ -1,0 +1,7 @@
+node_modules
+dist
+.env
+*.pfx
+*.p12
+.git
+.DS_Store
